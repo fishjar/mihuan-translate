@@ -109,9 +109,7 @@
           fetch(url).then(function (response) {
             return response.json();
           }).then(function (res) {
-            el_box_bd.innerHTML = `
-              <div>${res.sentences[0].trans}</div>
-            `;
+            el_box_bd.innerHTML = res.sentences.map(sentence => (`<div>${sentence.trans}</div>`)).join('');
           }).catch(function (err) {
             el_box_bd.innerHTML = `
             <div>${err}</div>
@@ -137,9 +135,7 @@
             `;
           });
         } else {
-          el_box_bd.innerHTML = `
-            <div>${res.sentences[0].trans}</div>
-          `;
+          el_box_bd.innerHTML = res.sentences.map(sentence => (`<div>${sentence.trans}</div>`)).join('');
         }
       }).catch(function (err) {
         el_box_bd.innerHTML = `
