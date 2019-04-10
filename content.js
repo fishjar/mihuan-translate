@@ -117,7 +117,10 @@
           });
         } else if (res.src === 'en' && word.indexOf(' ') === -1) { // 如果源语言是英文，且是单个单词，使用bing词典翻译
           url = new URL('https://xtk.azurewebsites.net/BingDictService.aspx');
-          params = { Word: word };
+          params = {
+            Word: word,
+            Samples: false,
+          };
           url.search = new URLSearchParams(params);
           fetch(url).then(function (response) {
             return response.json();
