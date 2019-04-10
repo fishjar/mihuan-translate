@@ -159,8 +159,8 @@
     elem.id = 'mh_box';
     elem.innerHTML = `
       <div id="mh_box_hd">
-        <i id="mh_box_btn_fixed" class="mh_icon mh_icon_fullscreen"></i>
-        <i id="mh_box_btn_close" class="mh_icon mh_icon_close"></i>
+        <i id="mh_box_btn_fixed" class="mh_icon mh_icon_fullscreen" title="固定"></i>
+        <i id="mh_box_btn_close" class="mh_icon mh_icon_close" title="关闭"></i>
       </div>
       <div id="mh_box_bd">
         <div>loading...</div>
