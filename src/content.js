@@ -7,7 +7,7 @@
    * 获取选中文本
    */
   function getSelectedText() {
-    var userSelection, selectedText = '';
+    let userSelection, selectedText = '';
     if (window.getSelection) { //现代浏览器
       userSelection = window.getSelection();
       selectedText = userSelection.toString();
@@ -23,8 +23,7 @@
    * @param {*} elmnt 
    */
   function dragElement(elmnt) {
-    console.log(elmnt.id)
-    var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+    let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
     if (document.getElementById(elmnt.id + "_hd")) {
       /* if present, the header is where you move the DIV from:*/
       document.getElementById(elmnt.id + "_hd").onmousedown = dragMouseDown;
@@ -148,6 +147,20 @@
 
     });
     document.body.appendChild(elem);
+
+    //全局捕获鼠标事件
+    document.body.addEventListener('mouseup', function (e) {
+      const elem = document.getElementById('mh_btn');
+      const selectedText = getSelectedText().trim();
+      if (!selectedText) {
+        elem.style.display = "none";
+        return;
+      }
+      word = selectedText;
+      elem.style.display = "block";
+      elem.style.top = (e.pageY + 10) + "px";
+      elem.style.left = (e.pageX + 25) + "px";
+    });
   }
 
   /**
@@ -159,6 +172,7 @@
     elem.innerHTML = `
       <div id="mh_box_hd">
         <i id="mh_box_btn_fixed" class="mh_icon mh_icon_fullscreen" title="固定"></i>
+        <span>MiHuan</span>
         <i id="mh_box_btn_close" class="mh_icon mh_icon_close" title="关闭"></i>
       </div>
       <div id="mh_box_bd">
@@ -185,23 +199,6 @@
       }
     }
   }
-
-  /**
-   * 全局捕获鼠标事件
-   */
-  document.body.addEventListener('mouseup', function (e) {
-    const elem = document.getElementById('mh_btn');
-    const selectedText = getSelectedText().trim();
-    if (!selectedText) {
-      elem.style.display = "none";
-      return;
-    }
-    word = selectedText;
-    elem.style.display = "block";
-    elem.style.top = (e.pageY + 10) + "px";
-    elem.style.left = (e.pageX + 25) + "px";
-  });
-
 
   /**
    * 页面初始化
