@@ -7,7 +7,7 @@
   "homepage_url": "https://github.com/fishjar/mihuan-translate",
   "permissions": [
     "https://translate.google.cn/translate_a/single",
-    "https://xtk.azurewebsites.net/BingDictService.aspx"
+    "https://caihua.jisunauto.com/dict/bing/dict"
   ],
   "browser_action": {
     "default_icon": "logo.png"
