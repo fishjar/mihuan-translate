@@ -141,7 +141,7 @@
           url = new URL('https://caihua.jisunauto.com/dict/bing/dict');
           params = {
             word,
-            simple: false,
+            simple: true,
           };
           url.search = new URLSearchParams(params);
           fetch(url).then(function (response) {
