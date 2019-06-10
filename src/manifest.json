@@ -6,11 +6,12 @@
   "author": "Gabe Yuan <yugang2002@gmail.com>",
   "homepage_url": "https://github.com/fishjar/mihuan-translate",
   "permissions": [
-    "https://translate.google.cn/translate_a/single",
-    "https://caihua.jisunauto.com/dict/bing/dict"
+    "https://caihua.jisunauto.com/dict",
+    "clipboardRead"
   ],
   "browser_action": {
-    "default_icon": "logo.png"
+    "default_icon": "logo.png",
+    "default_popup": "popup.html"
   },
   "icons": {
     "128": "/logo.png",
@@ -31,5 +32,11 @@
         "content.js"
       ]
     }
-  ]
+  ],
+  "background": {
+    "scripts": [
+      "background.js"
+    ],
+    "persistent": false
+  }
 }

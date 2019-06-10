@@ -1,0 +1,9 @@
+#popup {
+  width: 375px;
+}
+#translate_res {
+  padding: 15px;
+}
+#translate__word {
+  resize: vertical;
+}

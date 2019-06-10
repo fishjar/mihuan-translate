@@ -71,6 +71,7 @@
     elem.id = 'mh_btn';
     elem.innerHTML = '<span>译</span>'
     elem.addEventListener('click', function (e) {
+
       if (!word) {
         return;
       }
@@ -86,89 +87,133 @@
         <div>loading...</div>
       `;
 
-      let url = new URL('https://translate.google.cn/translate_a/single');
-      let params = {
-        client: 'gtx',
-        sl: 'auto',
-        tl: 'zh-CN',
-        dj: '1',
-        ie: 'UTF-8',
-        oe: 'UTF-8',
-        // dt: ['at', 'bd', 'ex', 'md', 'qca', 'rw', 'rm', 'ss', 't'],
-        dt: 't',
-        q: word,
-      };
-      url.search = new URLSearchParams(params);
-      fetch(url).then(function (response) {
-        return response.json();
-      }).then(function (res) {
-        if (res.src === 'zh-CN' || res.src === 'zh-TW' || res.src === 'zh-HK') { //如果源语言是中文，则目标语言设为英文
-          params.tl = 'en';
-          url.search = new URLSearchParams(params);
-          fetch(url).then(function (response) {
-            return response.json();
-          }).then(function (res) {
-            el_box_bd.innerHTML = res.sentences.map(sentence => (`<div>${sentence.trans}</div>`)).join('');
-          }).catch(function (err) {
-            el_box_bd.innerHTML = `
+      chrome.runtime.sendMessage({
+        contentScriptQuery: 'queryDict',
+        dictType: 'google',
+        dictParams: {
+          tl: 'zh-CN',
+          q: word,
+        }
+      }, ({ res, err }) => {
+        if (err) {
+          el_box_bd.innerHTML = `
             <div>${err}</div>
           `;
-          });
-        } else if (res.src === 'en' && word.indexOf(' ') === -1) { // 如果源语言是英文，且是单个单词，使用bing词典翻译
-
-          // url = new URL('https://xtk.azurewebsites.net/BingDictService.aspx');
-          // params = {
-          //   Word: word,
-          //   Samples: false,
-          // };
-          // url.search = new URLSearchParams(params);
-          // fetch(url).then(function (response) {
-          //   return response.json();
-          // }).then(function (res) {
-          //   el_box_bd.innerHTML = `
-          //     <div><b>${word}</b></div>
-          //     <div>美 [${res.pronunciation && res.pronunciation.AmE}]</div>
-          //     <div>英 [${res.pronunciation && res.pronunciation.BrE}]</div>
-          //     ${res.defs.map(def => (`<div>[${def.pos}] ${def.def}</div>`)).join('')}
-          //   `;
-          // }).catch(function (err) {
-          //   el_box_bd.innerHTML = `
-          //     <div><b>${word}</b></div>
-          //     <div>${err}</div>
-          //   `;
-          // });
-
-          url = new URL('https://caihua.jisunauto.com/dict/bing/dict');
-          params = {
-            word,
-            simple: true,
-          };
-          url.search = new URLSearchParams(params);
-          fetch(url).then(function (response) {
-            return response.json();
-          }).then(function (res) {
-            let html = `<div><b>${res.result_word || word}</b></div>`;
-            res.variant && (html += res.variant.map(item => `<div>${item.pos}: ${item.def}</div>`).join(''));
-            res.phonetic_US && (html += `<div>美 ${res.phonetic_US}</div>`);
-            res.phonetic_UK && (html += `<div>美 ${res.phonetic_UK}</div>`);
-            res.translation && (html += res.translation.map(item => `<div>[${item.pos}] ${item.def}</div>`).join(''));
-            
-            el_box_bd.innerHTML = html;
-          }).catch(function (err) {
-            el_box_bd.innerHTML = `
-              <div><b>${word}</b></div>
-              <div>${err}</div>
-            `;
-          });
-
         } else {
-          el_box_bd.innerHTML = res.sentences.map(sentence => (`<div>${sentence.trans}</div>`)).join('');
+          if (res.src === 'en' && word.indexOf(' ') === -1) { // 如果源语言是英文，且是单个单词，使用bing词典翻译
+            chrome.runtime.sendMessage({
+              contentScriptQuery: 'queryDict',
+              dictType: 'bing',
+              dictParams: {
+                word,
+                simple: true,
+              }
+            }, ({ res, err }) => {
+              if (err) {
+                el_box_bd.innerHTML = `
+                  <div>${err}</div>
+                `;
+              } else {
+                let html = `<div><b>${res.result_word || word}</b></div>`;
+                res.variant && (html += res.variant.map(item => `<div>${item.pos}: ${item.def}</div>`).join(''));
+                res.phonetic_US && (html += `<div>美 ${res.phonetic_US}</div>`);
+                res.phonetic_UK && (html += `<div>美 ${res.phonetic_UK}</div>`);
+                res.translation && (html += res.translation.map(item => `<div>[${item.pos}] ${item.def}</div>`).join(''));
+
+                el_box_bd.innerHTML = html;
+              }
+            });
+          } else {
+            el_box_bd.innerHTML = res.sentences.map(sentence => (`<div>${sentence.trans}</div>`)).join('');
+          }
         }
-      }).catch(function (err) {
-        el_box_bd.innerHTML = `
-          <div>${err}</div>
-        `;
       });
+
+
+      // // let url = new URL('https://translate.google.cn/translate_a/single');
+      // let url = new URL('https://caihua.jisunauto.com/dict/google/dict');
+      // let params = {
+      //   client: 'gtx',
+      //   sl: 'auto',
+      //   tl: 'zh-CN',
+      //   dj: '1',
+      //   ie: 'UTF-8',
+      //   oe: 'UTF-8',
+      //   // dt: ['at', 'bd', 'ex', 'md', 'qca', 'rw', 'rm', 'ss', 't'],
+      //   dt: 't',
+      //   q: word,
+      // };
+      // url.search = new URLSearchParams(params);
+      // fetch(url).then(function (response) {
+      //   return response.json();
+      // }).then(function (res) {
+      //   if (res.src === 'zh-CN' || res.src === 'zh-TW' || res.src === 'zh-HK') { //如果源语言是中文，则目标语言设为英文
+      //     params.tl = 'en';
+      //     url.search = new URLSearchParams(params);
+      //     fetch(url).then(function (response) {
+      //       return response.json();
+      //     }).then(function (res) {
+      //       el_box_bd.innerHTML = res.sentences.map(sentence => (`<div>${sentence.trans}</div>`)).join('');
+      //     }).catch(function (err) {
+      //       el_box_bd.innerHTML = `
+      //       <div>${err}</div>
+      //     `;
+      //     });
+      //   } else if (res.src === 'en' && word.indexOf(' ') === -1) { // 如果源语言是英文，且是单个单词，使用bing词典翻译
+
+      //     // url = new URL('https://xtk.azurewebsites.net/BingDictService.aspx');
+      //     // params = {
+      //     //   Word: word,
+      //     //   Samples: false,
+      //     // };
+      //     // url.search = new URLSearchParams(params);
+      //     // fetch(url).then(function (response) {
+      //     //   return response.json();
+      //     // }).then(function (res) {
+      //     //   el_box_bd.innerHTML = `
+      //     //     <div><b>${word}</b></div>
+      //     //     <div>美 [${res.pronunciation && res.pronunciation.AmE}]</div>
+      //     //     <div>英 [${res.pronunciation && res.pronunciation.BrE}]</div>
+      //     //     ${res.defs.map(def => (`<div>[${def.pos}] ${def.def}</div>`)).join('')}
+      //     //   `;
+      //     // }).catch(function (err) {
+      //     //   el_box_bd.innerHTML = `
+      //     //     <div><b>${word}</b></div>
+      //     //     <div>${err}</div>
+      //     //   `;
+      //     // });
+
+      //     url = new URL('https://caihua.jisunauto.com/dict/bing/dict');
+      //     params = {
+      //       word,
+      //       simple: true,
+      //     };
+      //     url.search = new URLSearchParams(params);
+      //     fetch(url).then(function (response) {
+      //       return response.json();
+      //     }).then(function (res) {
+      //       let html = `<div><b>${res.result_word || word}</b></div>`;
+      //       res.variant && (html += res.variant.map(item => `<div>${item.pos}: ${item.def}</div>`).join(''));
+      //       res.phonetic_US && (html += `<div>美 ${res.phonetic_US}</div>`);
+      //       res.phonetic_UK && (html += `<div>美 ${res.phonetic_UK}</div>`);
+      //       res.translation && (html += res.translation.map(item => `<div>[${item.pos}] ${item.def}</div>`).join(''));
+
+      //       el_box_bd.innerHTML = html;
+      //     }).catch(function (err) {
+      //       el_box_bd.innerHTML = `
+      //         <div><b>${word}</b></div>
+      //         <div>${err}</div>
+      //       `;
+      //     });
+
+      //   } else {
+      //     el_box_bd.innerHTML = res.sentences.map(sentence => (`<div>${sentence.trans}</div>`)).join('');
+      //   }
+      // }).catch(function (err) {
+      //   el_box_bd.innerHTML = `
+      //     <div>${err}</div>
+      //   `;
+      // });
 
     });
     document.body.appendChild(elem);
