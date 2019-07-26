@@ -39,6 +39,8 @@
 
 最大可能是：`bing`对爬虫做了一些限制，可能是针对header，ip，或其他。
 
+查询`select`单词为例：
+
 正常访问的页面：
 
 ![正常访问的页面](./bing1.png)
@@ -47,8 +49,17 @@
 
 ![实际访问得到的页面](./bing2.png)
 
+No results found for select.
+
+Search tips:
+
+- Ensure words are spelled correctly.
+- Try rephrasing keywords or using synonyms.
+- Try less specific keywords.
+- Make your queries as concise as possible.
+
 这个问题就有点棘手了，有时间再解决吧：
 
 - 方案一：使用更完备的`Request Headers`躲过限制（希望可以）
-- 方案二：改用使用`Headless Chrome`试试（可能对查询速度有影响）
+- 方案二：改用`Headless Chrome`试试（可能对查询速度有影响）
 - 方案三：换服务器试试（下策）
