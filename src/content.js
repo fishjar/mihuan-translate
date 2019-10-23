@@ -117,7 +117,7 @@
                 let html = `<div><b>${res.result_word || word}</b></div>`;
                 res.variant && (html += res.variant.map(item => `<div>${item.pos}: ${item.def}</div>`).join(''));
                 res.phonetic_US && (html += `<div>美 ${res.phonetic_US}</div>`);
-                res.phonetic_UK && (html += `<div>美 ${res.phonetic_UK}</div>`);
+                res.phonetic_UK && (html += `<div>英 ${res.phonetic_UK}</div>`);
                 res.translation && (html += res.translation.map(item => `<div>[${item.pos}] ${item.def}</div>`).join(''));
 
                 el_box_bd.innerHTML = html;
