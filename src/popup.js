@@ -103,7 +103,10 @@
             dictHtml += `<div>[${item.pos}]</div>`;
             dictHtml += `<ul>`;
             item.def.forEach((d) => {
-              dictHtml += `<li>${d.bil} ${d.val}</li>`;
+              dictHtml += `<li>`;
+              dictHtml += `<div>${d.val}</div>`;
+              dictHtml += `<div>${d.bil}</div>`;
+              dictHtml += `</li>`;
             });
             dictHtml += `</ul>`;
           });
