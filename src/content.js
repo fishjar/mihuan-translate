@@ -1,17 +1,19 @@
 (function () {
-
-  let word = "";
-  let isFixed = false;
+  let word = ""; // 选中的文本
+  let isFixed = false; // 是否固定弹框位置
 
   /**
    * 获取选中文本
    */
   function getSelectedText() {
-    let userSelection, selectedText = '';
-    if (window.getSelection) { //现代浏览器
+    let userSelection,
+      selectedText = "";
+    if (window.getSelection) {
+      //现代浏览器
       userSelection = window.getSelection();
       selectedText = userSelection.toString();
-    } else if (document.selection) { // 老IE浏览器
+    } else if (document.selection) {
+      // 老IE浏览器
       userSelection = document.selection.createRange();
       selectedText = userSelection.text;
     }
@@ -20,10 +22,13 @@
 
   /**
    * 设置元素可拖动
-   * @param {*} elmnt 
+   * @param {*} elmnt
    */
   function dragElement(elmnt) {
-    let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+    let pos1 = 0,
+      pos2 = 0,
+      pos3 = 0,
+      pos4 = 0;
     if (document.getElementById(elmnt.id + "_hd")) {
       /* if present, the header is where you move the DIV from:*/
       document.getElementById(elmnt.id + "_hd").onmousedown = dragMouseDown;
@@ -52,8 +57,8 @@
       pos3 = e.clientX;
       pos4 = e.clientY;
       // set the element's new position:
-      elmnt.style.top = (elmnt.offsetTop - pos2) + "px";
-      elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
+      elmnt.style.top = elmnt.offsetTop - pos2 + "px";
+      elmnt.style.left = elmnt.offsetLeft - pos1 + "px";
     }
 
     function closeDragElement() {
@@ -63,183 +68,115 @@
     }
   }
 
+  function sendMsg(type, data) {
+    return new Promise((resolve, reject) => {
+      chrome.runtime.sendMessage({ type, data }, ({ res, err }) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(res);
+        }
+      });
+    });
+  }
+
+  /**
+   * 点击翻译按钮
+   * @param {*} e
+   */
+  function handleBtnClick(e) {
+    if (!word) {
+      return;
+    }
+
+    const $box = document.getElementById("mh_box");
+    $box.style.display = "block";
+
+    if (!isFixed) {
+      // 没有固定位置
+      $box.style.top = e.clientY + 10 + "px";
+      $box.style.left = e.clientX + 10 + "px";
+    }
+
+    const $bd = document.getElementById("mh_box_bd");
+    $bd.innerHTML = `<div>loading...</div>`;
+
+    sendMsg("googleAuto", { q: word })
+      .then((resGoogle) => {
+        console.log("resGoogle", resGoogle);
+        if (!resGoogle) {
+          return;
+        }
+        const trans = resGoogle.trans.join(" ");
+        if (!resGoogle.isWord) {
+          $bd.innerHTML = `<div>${trans}</div>`;
+          return;
+        }
+        $bd.innerHTML = `<div><b>${word}</b> ${trans}</div>`;
+        return sendMsg("bingDict", { q: word });
+      })
+      .then((resBing) => {
+        if (!resBing) {
+          return;
+        }
+        const { trans, variants, phoneticUS, phoneticUK } = resBing;
+        let dictHtml = ``;
+        variants &&
+          variants.forEach((item) => {
+            dictHtml += `<div>${item.pos}: ${item.def}</div>`;
+          });
+        dictHtml += `<div>美 ${phoneticUS}</div>`;
+        dictHtml += `<div>英 ${phoneticUK}</div>`;
+        trans &&
+          trans.forEach((item) => {
+            dictHtml += `<div>[${item.pos}] ${item.def}</div>`;
+          });
+
+        $bd.insertAdjacentHTML("beforeend", dictHtml);
+      })
+      .catch((err) => {
+        $bd.innerHTML = `<div>${err.message || "出错了..."}</div>`;
+      });
+  }
+
+  /**
+   * 全局捕获鼠标事件
+   * @param {*} e
+   */
+  function handleMouseUp(e) {
+    const elem = document.getElementById("mh_btn");
+    const selectedText = getSelectedText().trim();
+    if (!selectedText) {
+      elem.style.display = "none";
+      return;
+    }
+    word = selectedText;
+    elem.style.display = "block";
+    elem.style.top = e.pageY + 10 + "px";
+    elem.style.left = e.pageX + 25 + "px";
+  }
+
   /**
    * 插入按钮到页面
    */
   function btnInit() {
-    const elem = document.createElement('div');
-    elem.id = 'mh_btn';
-    elem.innerHTML = '<span>译</span>'
-    elem.addEventListener('click', function (e) {
-
-      if (!word) {
-        return;
-      }
-
-      const el_box = document.getElementById('mh_box');
-      el_box.style.display = "block";
-      if (!isFixed) { //是否固定位置
-        el_box.style.top = (e.clientY + 10) + "px";
-        el_box.style.left = (e.clientX + 10) + "px";
-      }
-      const el_box_bd = document.getElementById('mh_box_bd');
-      el_box_bd.innerHTML = `
-        <div>loading...</div>
-      `;
-
-      chrome.runtime.sendMessage({
-        contentScriptQuery: 'queryDict',
-        dictType: 'google',
-        dictParams: {
-          tl: 'zh-CN',
-          q: word,
-        }
-      }, ({ res, err }) => {
-        if (err) {
-          el_box_bd.innerHTML = `
-            <div>${err}</div>
-          `;
-        } else {
-          if (res.src === 'en' && word.indexOf(' ') === -1) { // 如果源语言是英文，且是单个单词，使用bing词典翻译
-            chrome.runtime.sendMessage({
-              contentScriptQuery: 'queryDict',
-              dictType: 'bing',
-              dictParams: {
-                word,
-                simple: true,
-              }
-            }, ({ res, err }) => {
-              if (err) {
-                el_box_bd.innerHTML = `
-                  <div>${err}</div>
-                `;
-              } else {
-                let html = `<div><b>${res.result_word || word}</b></div>`;
-                res.variant && (html += res.variant.map(item => `<div>${item.pos}: ${item.def}</div>`).join(''));
-                res.phonetic_US && (html += `<div>美 ${res.phonetic_US}</div>`);
-                res.phonetic_UK && (html += `<div>英 ${res.phonetic_UK}</div>`);
-                res.translation && (html += res.translation.map(item => `<div>[${item.pos}] ${item.def}</div>`).join(''));
-
-                el_box_bd.innerHTML = html;
-              }
-            });
-          } else {
-            el_box_bd.innerHTML = res.sentences.map(sentence => (`<div>${sentence.trans}</div>`)).join('');
-          }
-        }
-      });
-
-
-      // // let url = new URL('https://translate.google.cn/translate_a/single');
-      // let url = new URL('https://caihua.jisunauto.com/dict/google/dict');
-      // let params = {
-      //   client: 'gtx',
-      //   sl: 'auto',
-      //   tl: 'zh-CN',
-      //   dj: '1',
-      //   ie: 'UTF-8',
-      //   oe: 'UTF-8',
-      //   // dt: ['at', 'bd', 'ex', 'md', 'qca', 'rw', 'rm', 'ss', 't'],
-      //   dt: 't',
-      //   q: word,
-      // };
-      // url.search = new URLSearchParams(params);
-      // fetch(url).then(function (response) {
-      //   return response.json();
-      // }).then(function (res) {
-      //   if (res.src === 'zh-CN' || res.src === 'zh-TW' || res.src === 'zh-HK') { //如果源语言是中文，则目标语言设为英文
-      //     params.tl = 'en';
-      //     url.search = new URLSearchParams(params);
-      //     fetch(url).then(function (response) {
-      //       return response.json();
-      //     }).then(function (res) {
-      //       el_box_bd.innerHTML = res.sentences.map(sentence => (`<div>${sentence.trans}</div>`)).join('');
-      //     }).catch(function (err) {
-      //       el_box_bd.innerHTML = `
-      //       <div>${err}</div>
-      //     `;
-      //     });
-      //   } else if (res.src === 'en' && word.indexOf(' ') === -1) { // 如果源语言是英文，且是单个单词，使用bing词典翻译
-
-      //     // url = new URL('https://xtk.azurewebsites.net/BingDictService.aspx');
-      //     // params = {
-      //     //   Word: word,
-      //     //   Samples: false,
-      //     // };
-      //     // url.search = new URLSearchParams(params);
-      //     // fetch(url).then(function (response) {
-      //     //   return response.json();
-      //     // }).then(function (res) {
-      //     //   el_box_bd.innerHTML = `
-      //     //     <div><b>${word}</b></div>
-      //     //     <div>美 [${res.pronunciation && res.pronunciation.AmE}]</div>
-      //     //     <div>英 [${res.pronunciation && res.pronunciation.BrE}]</div>
-      //     //     ${res.defs.map(def => (`<div>[${def.pos}] ${def.def}</div>`)).join('')}
-      //     //   `;
-      //     // }).catch(function (err) {
-      //     //   el_box_bd.innerHTML = `
-      //     //     <div><b>${word}</b></div>
-      //     //     <div>${err}</div>
-      //     //   `;
-      //     // });
-
-      //     url = new URL('https://caihua.jisunauto.com/dict/bing/dict');
-      //     params = {
-      //       word,
-      //       simple: true,
-      //     };
-      //     url.search = new URLSearchParams(params);
-      //     fetch(url).then(function (response) {
-      //       return response.json();
-      //     }).then(function (res) {
-      //       let html = `<div><b>${res.result_word || word}</b></div>`;
-      //       res.variant && (html += res.variant.map(item => `<div>${item.pos}: ${item.def}</div>`).join(''));
-      //       res.phonetic_US && (html += `<div>美 ${res.phonetic_US}</div>`);
-      //       res.phonetic_UK && (html += `<div>美 ${res.phonetic_UK}</div>`);
-      //       res.translation && (html += res.translation.map(item => `<div>[${item.pos}] ${item.def}</div>`).join(''));
-
-      //       el_box_bd.innerHTML = html;
-      //     }).catch(function (err) {
-      //       el_box_bd.innerHTML = `
-      //         <div><b>${word}</b></div>
-      //         <div>${err}</div>
-      //       `;
-      //     });
-
-      //   } else {
-      //     el_box_bd.innerHTML = res.sentences.map(sentence => (`<div>${sentence.trans}</div>`)).join('');
-      //   }
-      // }).catch(function (err) {
-      //   el_box_bd.innerHTML = `
-      //     <div>${err}</div>
-      //   `;
-      // });
-
-    });
+    const elem = document.createElement("div");
+    elem.id = "mh_btn";
+    elem.innerHTML = "<span>译</span>";
+    elem.addEventListener("click", handleBtnClick);
     document.body.appendChild(elem);
 
     //全局捕获鼠标事件
-    document.body.addEventListener('mouseup', function (e) {
-      const elem = document.getElementById('mh_btn');
-      const selectedText = getSelectedText().trim();
-      if (!selectedText) {
-        elem.style.display = "none";
-        return;
-      }
-      word = selectedText;
-      elem.style.display = "block";
-      elem.style.top = (e.pageY + 10) + "px";
-      elem.style.left = (e.pageX + 25) + "px";
-    });
+    document.body.addEventListener("mouseup", handleMouseUp);
   }
 
   /**
    * 插入翻译框到页面
    */
   function boxInit() {
-    const elem = document.createElement('div');
-    elem.id = 'mh_box';
-    elem.innerHTML = `
+    const $box = document.createElement("div");
+    $box.id = "mh_box";
+    $box.innerHTML = `
       <div id="mh_box_hd">
         <i id="mh_box_btn_fixed" class="mh_icon mh_icon_fullscreen" title="固定"></i>
         <span>MiHuan</span>
@@ -249,25 +186,25 @@
         <div>loading...</div>
       </div>
     `;
-    document.body.appendChild(elem);
-    dragElement(elem);
+    document.body.appendChild($box); // 插入dom
+    dragElement($box); // 可拖动
 
     // 关闭按钮
-    const el_close = document.getElementById('mh_box_btn_close');
-    el_close.onclick = function (e) {
-      elem.style.display = 'none';
-    }
+    const $close = document.getElementById("mh_box_btn_close");
+    $close.onclick = function (e) {
+      $box.style.display = "none";
+    };
 
     // 固定翻译框按钮
-    const el_fixed = document.getElementById('mh_box_btn_fixed');
-    el_fixed.onclick = function (e) {
+    const $fixed = document.getElementById("mh_box_btn_fixed");
+    $fixed.onclick = function (e) {
       isFixed = !isFixed;
       if (isFixed) {
-        el_fixed.classList.add('mh_fixed');
+        $fixed.classList.add("mh_fixed");
       } else {
-        el_fixed.classList.remove('mh_fixed');
+        $fixed.classList.remove("mh_fixed");
       }
-    }
+    };
   }
 
   /**
@@ -277,5 +214,4 @@
     boxInit();
     btnInit();
   };
-
 })();

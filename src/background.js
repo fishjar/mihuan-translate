@@ -1,35 +1,45 @@
-(function () {
-  chrome.runtime.onMessage.addListener(function ({ contentScriptQuery, dictType = 'google', dictParams }, sender, sendResponse) {
-    if (contentScriptQuery == 'queryDict') {
-      const url = new URL(`https://caihua.jisunauto.com/dict/${dictType}/dict`);
-      let params = {
-        client: 'gtx',
-        sl: 'auto',
-        tl: 'zh-CN',
-        dj: '1',
-        ie: 'UTF-8',
-        oe: 'UTF-8',
-        dt: 't',
-        ...dictParams
-      };
-      if (dictType === 'bing') {
-        params = dictParams
+/**
+ * 请求封装
+ * @param {*} path
+ * @param {*} params
+ * @param {*} sendResponse
+ */
+function api(path, params, sendResponse) {
+  const url = new URL(`https://trans.rayjar.com${path}`);
+  url.search = new URLSearchParams(params);
+  fetch(url)
+    .then((res) => {
+      if (!res.ok) {
+        throw new Error(`[${res.status}]${res.statusText}`);
       }
-      url.search = new URLSearchParams(params);
-      fetch(url)
-        .then(response => response.json())
-        .then(res => {
-          // 如果源语言是中文，则目标语言设为英文
-          if (dictType === 'google' && (res.src === 'zh-CN' || res.src === 'zh-TW' || res.src === 'zh-HK')) {
-            url.search = new URLSearchParams({ ...params, tl: 'en' });
-            return fetch(url)
-              .then(response => response.json())
-              .then(res => sendResponse({ res }));
-          }
-          return sendResponse({ res });
-        })
-        .catch(err => sendResponse({ err }));
-      return true;  // Will respond asynchronously.
-    }
-  });
-})()
+      return res.json();
+    })
+    .then((res) => {
+      sendResponse({ res });
+    })
+    .catch((err) => {
+      sendResponse({ err });
+    });
+}
+
+/**
+ * 添加消息监听
+ */
+chrome.runtime.onMessage.addListener(function (
+  { type, data: { q } },
+  sender,
+  sendResponse
+) {
+  switch (type) {
+    case "googleAuto":
+      api("/google/auto", { q }, sendResponse);
+      break;
+    case "bingDict":
+      api("/bing/dictf", { q }, sendResponse);
+      break;
+    default:
+      sendResponse(new Error(`不支持的消息类型: ${type}`));
+  }
+  // 如果你希望异步调用sendResponse,需要在onMessage事件处理器中加上return true
+  return true;
+});
