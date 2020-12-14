@@ -121,10 +121,14 @@
         }
         if (sentences && sentences.length > 0) {
           dictHtml += `<hr />`;
-          ees.forEach((item) => {
-            dictHtml += `<div>[英] ${item.sen_en}</div>`;
-            dictHtml += `<div>[中] ${item.sen_cn}</div>`;
+          dictHtml += `<ul>`;
+          sentences.forEach((item) => {
+            dictHtml += `<li>`;
+            dictHtml += `<div>${item.sen_en}</div>`;
+            dictHtml += `<div>${item.sen_cn}</div>`;
+            dictHtml += `</li>`;
           });
+          dictHtml += `</ul>`;
         }
         $bd.insertAdjacentHTML("beforeend", dictHtml);
       })
