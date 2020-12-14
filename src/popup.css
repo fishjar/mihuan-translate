@@ -1,9 +1,14 @@
 #popup {
   width: 375px;
 }
-#translate_res {
-  padding: 15px;
+#trans_input {
+  box-sizing: border-box;
+  border: 1px solid #ccc;
+  padding: 8px;
+  width: 100%;
+  max-width: 100%;
+  min-width: 100%;
 }
-#translate__word {
-  resize: vertical;
+#trans_btn_wrap {
+  padding: 8px 0;
 }

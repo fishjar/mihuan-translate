@@ -68,6 +68,11 @@
     }
   }
 
+  /**
+   * 发送消息给background
+   * @param {*} type
+   * @param {*} data
+   */
   function sendMsg(type, data) {
     return new Promise((resolve, reject) => {
       chrome.runtime.sendMessage({ type, data }, ({ res, err }) => {
@@ -103,7 +108,6 @@
 
     sendMsg("googleAuto", { q: word })
       .then((resGoogle) => {
-        console.log("resGoogle", resGoogle);
         if (!resGoogle) {
           return;
         }
@@ -125,8 +129,8 @@
           variants.forEach((item) => {
             dictHtml += `<div>${item.pos}: ${item.def}</div>`;
           });
-        dictHtml += `<div>美 ${phoneticUS}</div>`;
-        dictHtml += `<div>英 ${phoneticUK}</div>`;
+        phoneticUS && (dictHtml += `<div>美 ${phoneticUS}</div>`);
+        phoneticUK && (dictHtml += `<div>英 ${phoneticUK}</div>`);
         trans &&
           trans.forEach((item) => {
             dictHtml += `<div>[${item.pos}] ${item.def}</div>`;

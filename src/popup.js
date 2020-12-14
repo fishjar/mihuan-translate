@@ -1,75 +1,135 @@
 (function () {
+  const $btn = document.getElementById("trans_btn"); // 翻译按钮
+  const $bd = document.getElementById("trans_bd"); // 结果元素
+  const $input = document.getElementById("trans_input"); // 输入框
+
+  $input.focus(); // 聚焦输入框
+  document.execCommand("paste"); // 复制粘帖板内容到输入框
+  handleTranslate(); // 翻译
+
+  // 翻译按钮添加点击事件
+  $btn.addEventListener("click", function (e) {
+    handleTranslate();
+  });
+
+  /**
+   * 发送消息给background
+   * @param {*} type
+   * @param {*} data
+   */
+  function sendMsg(type, data) {
+    return new Promise((resolve, reject) => {
+      chrome.runtime.sendMessage({ type, data }, ({ res, err }) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(res);
+        }
+      });
+    });
+  }
 
   /**
    * 翻译函数
    */
-  function translate() {
-    const word = translate_textarea.value.trim();
+  function handleTranslate() {
+    const word = $input.value.trim();
     if (!word) {
       return;
     }
+    $bd.innerHTML = `<div>loading...</div>`;
 
-    el_box_bd.innerHTML = `
-      <div>loading...</div>
-    `;
-
-    chrome.runtime.sendMessage({
-      contentScriptQuery: 'queryDict',
-      dictType: 'google',
-      dictParams: {
-        tl: 'zh-CN',
-        q: word,
-      }
-    }, ({ res, err }) => {
-      if (err) {
-        el_box_bd.innerHTML = `
-          <div>${err}</div>
-        `;
-      } else {
-        if (res.src === 'en' && word.indexOf(' ') === -1) { // 如果源语言是英文，且是单个单词，使用bing词典翻译
-          chrome.runtime.sendMessage({
-            contentScriptQuery: 'queryDict',
-            dictType: 'bing',
-            dictParams: {
-              word,
-              simple: true,
-            }
-          }, ({ res, err }) => {
-            if (err) {
-              el_box_bd.innerHTML = `
-                <div>${err}</div>
-              `;
-            } else {
-              let html = `<div><b>${res.result_word || word}</b></div>`;
-              res.variant && (html += res.variant.map(item => `<div>${item.pos}: ${item.def}</div>`).join(''));
-              res.phonetic_US && (html += `<div>美 ${res.phonetic_US}</div>`);
-              res.phonetic_UK && (html += `<div>美 ${res.phonetic_UK}</div>`);
-              res.translation && (html += res.translation.map(item => `<div>[${item.pos}] ${item.def}</div>`).join(''));
-
-              el_box_bd.innerHTML = html;
-            }
-          });
-        } else {
-          el_box_bd.innerHTML = res.sentences.map(sentence => (`<div>${sentence.trans}</div>`)).join('');
+    sendMsg("googleAuto", { q: word })
+      .then((resGoogle) => {
+        if (!resGoogle) {
+          return;
         }
-      }
-    });
+        const trans = resGoogle.trans.join(" ");
+        if (!resGoogle.isWord) {
+          $bd.innerHTML = `<div>${trans}</div>`;
+          return;
+        }
+        $bd.innerHTML = `<div><b>${word}</b> ${trans}</div>`;
+        return sendMsg("bingDict", { q: word });
+      })
+      .then((resBing) => {
+        if (!resBing) {
+          return;
+        }
+        const {
+          trans, //翻译
+          variants, // 相关词
+          phoneticUS, //音标
+          phoneticUK, //音标
+          colls, //搭配
+          synonyms, //同义词
+          antonyms, //反义词
+          bilinguals, //英汉双解
+          ees, //英英
+          sentences, // 例句
+        } = resBing;
+        let dictHtml = ``;
+        variants &&
+          variants.forEach((item) => {
+            dictHtml += `<div>${item.pos}: ${item.def}</div>`;
+          });
+        phoneticUS && (dictHtml += `<div>美 ${phoneticUS}</div>`);
+        phoneticUK && (dictHtml += `<div>英 ${phoneticUK}</div>`);
+        trans &&
+          trans.forEach((item) => {
+            dictHtml += `<div>[${item.pos}] ${item.def}</div>`;
+          });
+        if (colls && colls.length > 0) {
+          dictHtml += `<hr />`;
+          colls.forEach((item) => {
+            dictHtml += `<div>[${item.pos}] ${item.def.join(", ")}</div>`;
+          });
+        }
+        if (synonyms && synonyms.length > 0) {
+          dictHtml += `<hr />`;
+          synonyms.forEach((item) => {
+            dictHtml += `<div>[${item.pos}] ${item.def.join(", ")}</div>`;
+          });
+        }
+        if (antonyms && antonyms.length > 0) {
+          dictHtml += `<hr />`;
+          antonyms.forEach((item) => {
+            dictHtml += `<div>[${item.pos}] ${item.def.join(", ")}</div>`;
+          });
+        }
+        if (bilinguals && bilinguals.length > 0) {
+          dictHtml += `<hr />`;
+          bilinguals.forEach((item) => {
+            dictHtml += `<div>[${item.pos}]</div>`;
+            dictHtml += `<ul>`;
+            item.def.forEach((d) => {
+              dictHtml += `<li>${d.bil} ${d.val}</li>`;
+            });
+            dictHtml += `</ul>`;
+          });
+        }
+        if (ees && ees.length > 0) {
+          dictHtml += `<hr />`;
+          ees.forEach((item) => {
+            dictHtml += `<div>[${item.pos}]</div>`;
+            dictHtml += `<ul>`;
+            item.def.forEach((d) => {
+              dictHtml += `<li>${d}</li>`;
+            });
+            dictHtml += `</ul>`;
+          });
+        }
+        if (sentences && sentences.length > 0) {
+          dictHtml += `<hr />`;
+          ees.forEach((item) => {
+            dictHtml += `<div>[英] ${item.sen_en}</div>`;
+            dictHtml += `<div>[中] ${item.sen_cn}</div>`;
+          });
+        }
+        $bd.insertAdjacentHTML("beforeend", dictHtml);
+      })
+      .catch((err) => {
+        $bd.innerHTML = `<div>${err.message || "出错了..."}</div>`;
+      });
   }
-
-  const translate_btn = document.getElementById('translate_btn'); // 翻译按钮
-  const el_box_bd = document.getElementById('translate_res'); // 结果元素
-  const translate_textarea = document.getElementById("translate__word"); // 输入框
-
-  translate_textarea.focus(); // 聚焦输入框
-  document.execCommand("paste"); // 复制粘帖板内容到输入框
-  if(translate_textarea.value.trim()) {
-    // 如果粘帖板不为空，直接翻译
-    translate()
-  }
-
-  // 翻译按钮添加点击事件
-  translate_btn.addEventListener('click', function (e) {
-    translate();
-  });
-
 })();

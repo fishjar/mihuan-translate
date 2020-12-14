@@ -4,26 +4,17 @@
 <head>
   <meta charset="UTF-8">
   <title>MiHuan Translate</title>
-  <link rel="stylesheet" href="https://res.wx.qq.com/open/libs/weui/1.1.3/weui.min.css">
   <link rel="stylesheet" href="./popup.css">
 </head>
 
 <body>
   <div id="popup">
-    <div class="weui-cells weui-cells_form">
-      <div class="weui-cell">
-        <div class="weui-cell__bd">
-          <textarea id="translate__word" class="weui-textarea" placeholder="请输入"></textarea>
-        </div>
-      </div>
+    <textarea id="trans_input" placeholder="请输入"></textarea>
+    <div id="trans_btn_wrap">
+      <button id="trans_btn">翻译</button>
     </div>
-    <div class="weui-btn-area" style="text-align: right">
-      <a class="weui-btn weui-btn_mini weui-btn_primary" href="javascript:" id="translate_btn">翻译</a>
-    </div>
-    <div id="translate_res"></div>
-
+    <div id="trans_bd"></div>
   </div>
-  <!-- <script type="text/javascript" src="https://res.wx.qq.com/open/libs/weuijs/1.1.4/weui.min.js"></script> -->
   <script src="./popup.js"></script>
 </body>
 
