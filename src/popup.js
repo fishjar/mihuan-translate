@@ -41,14 +41,18 @@
 
     sendMsg("googleAuto", { q: word })
       .then((resGoogle) => {
-        if (!resGoogle) {
+        if (!resGoogle || !Array.isArray(resGoogle.trans)) {
+          return;
+        }
+        if (!resGoogle.isWord) {
+          let transHtml = ``;
+          resGoogle.trans.forEach((item) => {
+            transHtml += `<div>${item}</div>`;
+          });
+          $bd.innerHTML = transHtml;
           return;
         }
         const trans = resGoogle.trans.join(" ");
-        if (!resGoogle.isWord) {
-          $bd.innerHTML = `<div>${trans}</div>`;
-          return;
-        }
         $bd.innerHTML = `<div><b>${word}</b> ${trans}</div>`;
         return sendMsg("bingDict", { q: word });
       })
