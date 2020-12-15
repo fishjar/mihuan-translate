@@ -114,7 +114,7 @@
         if (!resGoogle.isWord) {
           let transHtml = ``;
           resGoogle.trans.forEach((item) => {
-            transHtml += `<div>${item}</div>`;
+            transHtml += `<p>${item}</p>`;
           });
           $bd.innerHTML = transHtml;
           return;
