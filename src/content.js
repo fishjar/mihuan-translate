@@ -111,24 +111,35 @@
         if (!resGoogle || !Array.isArray(resGoogle.trans)) {
           return;
         }
-        if (!resGoogle.isWord) {
-          let transHtml = ``;
-          resGoogle.trans.forEach((item) => {
-            transHtml += `<p>${item}</p>`;
-          });
-          $bd.innerHTML = transHtml;
-          return;
+        let transHtml = ``;
+        resGoogle.trans.forEach((item) => {
+          transHtml += `<p>${item}</p>`;
+        });
+        $bd.innerHTML = transHtml;
+        if (resGoogle.isWord) {
+          return sendMsg("bingDict", { q: word });
         }
-        const trans = resGoogle.trans.join(" ");
-        $bd.innerHTML = `<div><b>${word}</b> ${trans}</div>`;
-        return sendMsg("bingDict", { q: word });
       })
       .then((resBing) => {
         if (!resBing) {
           return;
         }
-        const { trans, variants, phoneticUS, phoneticUK } = resBing;
+        const {
+          resultWord,
+          trans, //翻译
+          variants, // 相关词
+          phoneticUS, //音标
+          phoneticUK, //音标
+          colls, //搭配
+          synonyms, //同义词
+          antonyms, //反义词
+          bilinguals, //英汉双解
+          ees, //英英
+          sentences, // 例句
+        } = resBing;
         let dictHtml = ``;
+        dictHtml += `<fieldset>`;
+        dictHtml += `<legend><b>${resultWord || word}</b></legend>`;
         variants &&
           variants.forEach((item) => {
             dictHtml += `<div>${item.pos}: ${item.def}</div>`;
@@ -139,6 +150,31 @@
           trans.forEach((item) => {
             dictHtml += `<div>[${item.pos}] ${item.def}</div>`;
           });
+        dictHtml += `</fieldset>`;
+        if (colls && colls.length > 0) {
+          dictHtml += `<fieldset>`;
+          dictHtml += `<legend>搭配</legend>`;
+          colls.forEach((item) => {
+            dictHtml += `<div>[${item.pos}] ${item.def.join(", ")}</div>`;
+          });
+          dictHtml += `</fieldset>`;
+        }
+        if (synonyms && synonyms.length > 0) {
+          dictHtml += `<fieldset>`;
+          dictHtml += `<legend>同义词</legend>`;
+          synonyms.forEach((item) => {
+            dictHtml += `<div>[${item.pos}] ${item.def.join(", ")}</div>`;
+          });
+          dictHtml += `</fieldset>`;
+        }
+        if (antonyms && antonyms.length > 0) {
+          dictHtml += `<fieldset>`;
+          dictHtml += `<legend>反义词</legend>`;
+          antonyms.forEach((item) => {
+            dictHtml += `<div>[${item.pos}] ${item.def.join(", ")}</div>`;
+          });
+          dictHtml += `</fieldset>`;
+        }
 
         $bd.insertAdjacentHTML("beforeend", dictHtml);
       })
@@ -190,8 +226,10 @@
         <span>MiHuan</span>
         <i id="mh_box_btn_close" class="mh_icon mh_icon_close" title="关闭"></i>
       </div>
-      <div id="mh_box_bd">
-        <div>loading...</div>
+      <div id="mh_box_bd_wrap">
+        <div id="mh_box_bd">
+          <div>loading...</div>
+        </div>
       </div>
     `;
     document.body.appendChild($box); // 插入dom

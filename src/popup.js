@@ -44,23 +44,21 @@
         if (!resGoogle || !Array.isArray(resGoogle.trans)) {
           return;
         }
-        if (!resGoogle.isWord) {
-          let transHtml = ``;
-          resGoogle.trans.forEach((item) => {
-            transHtml += `<p>${item}</p>`;
-          });
-          $bd.innerHTML = transHtml;
-          return;
+        let transHtml = ``;
+        resGoogle.trans.forEach((item) => {
+          transHtml += `<p>${item}</p>`;
+        });
+        $bd.innerHTML = transHtml;
+        if (resGoogle.isWord) {
+          return sendMsg("bingDict", { q: word });
         }
-        const trans = resGoogle.trans.join(" ");
-        $bd.innerHTML = `<div><b>${word}</b> ${trans}</div>`;
-        return sendMsg("bingDict", { q: word });
       })
       .then((resBing) => {
         if (!resBing) {
           return;
         }
         const {
+          resultWord,
           trans, //翻译
           variants, // 相关词
           phoneticUS, //音标
@@ -73,6 +71,8 @@
           sentences, // 例句
         } = resBing;
         let dictHtml = ``;
+        dictHtml += `<fieldset>`;
+        dictHtml += `<legend><b>${resultWord || word}</b></legend>`;
         variants &&
           variants.forEach((item) => {
             dictHtml += `<div>${item.pos}: ${item.def}</div>`;
@@ -83,26 +83,34 @@
           trans.forEach((item) => {
             dictHtml += `<div>[${item.pos}] ${item.def}</div>`;
           });
+        dictHtml += `</fieldset>`;
         if (colls && colls.length > 0) {
-          dictHtml += `<hr />`;
+          dictHtml += `<fieldset>`;
+          dictHtml += `<legend>搭配</legend>`;
           colls.forEach((item) => {
             dictHtml += `<div>[${item.pos}] ${item.def.join(", ")}</div>`;
           });
+          dictHtml += `</fieldset>`;
         }
         if (synonyms && synonyms.length > 0) {
-          dictHtml += `<hr />`;
+          dictHtml += `<fieldset>`;
+          dictHtml += `<legend>同义词</legend>`;
           synonyms.forEach((item) => {
             dictHtml += `<div>[${item.pos}] ${item.def.join(", ")}</div>`;
           });
+          dictHtml += `</fieldset>`;
         }
         if (antonyms && antonyms.length > 0) {
-          dictHtml += `<hr />`;
+          dictHtml += `<fieldset>`;
+          dictHtml += `<legend>反义词</legend>`;
           antonyms.forEach((item) => {
             dictHtml += `<div>[${item.pos}] ${item.def.join(", ")}</div>`;
           });
+          dictHtml += `</fieldset>`;
         }
         if (bilinguals && bilinguals.length > 0) {
-          dictHtml += `<hr />`;
+          dictHtml += `<fieldset>`;
+          dictHtml += `<legend>英汉双解</legend>`;
           bilinguals.forEach((item) => {
             dictHtml += `<div>[${item.pos}]</div>`;
             dictHtml += `<ul>`;
@@ -114,9 +122,11 @@
             });
             dictHtml += `</ul>`;
           });
+          dictHtml += `</fieldset>`;
         }
         if (ees && ees.length > 0) {
-          dictHtml += `<hr />`;
+          dictHtml += `<fieldset>`;
+          dictHtml += `<legend>英英</legend>`;
           ees.forEach((item) => {
             dictHtml += `<div>[${item.pos}]</div>`;
             dictHtml += `<ul>`;
@@ -125,9 +135,11 @@
             });
             dictHtml += `</ul>`;
           });
+          dictHtml += `</fieldset>`;
         }
         if (sentences && sentences.length > 0) {
-          dictHtml += `<hr />`;
+          dictHtml += `<fieldset>`;
+          dictHtml += `<legend>例句</legend>`;
           dictHtml += `<ul>`;
           sentences.forEach((item) => {
             dictHtml += `<li>`;
@@ -136,6 +148,7 @@
             dictHtml += `</li>`;
           });
           dictHtml += `</ul>`;
+          dictHtml += `</fieldset>`;
         }
         $bd.insertAdjacentHTML("beforeend", dictHtml);
       })

@@ -1,10 +1,10 @@
 #mh_btn {
   position: absolute;
   z-index: 9999;
-  border: 1px solid #2196F3;
+  border: 1px solid #2196f3;
   display: none;
-  background-color: #2196F3;
-  color: #FFF;
+  background-color: #2196f3;
+  color: #fff;
   width: 20px;
   height: 20px;
   line-height: 20px;
@@ -17,9 +17,8 @@
 #mh_box {
   position: fixed;
   z-index: 9999;
-  border: 1px solid #2196F3;
+  border: 1px solid #2196f3;
   display: none;
-  width: 250px;
   font-size: 14px;
   line-height: 1.25em;
 }
@@ -28,17 +27,48 @@
   padding: 5px;
   cursor: move;
   z-index: 10000;
-  background-color: #2196F3;
+  background-color: #2196f3;
   color: #fff;
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 
+#mh_box_bd_wrap {
+  width: 300px;
+  max-height: 600px;
+  overflow-y: auto;
+}
+
 #mh_box_bd {
   padding: 5px;
   background-color: #f1f1f1;
   color: #000;
+}
+
+#mh_box_bd fieldset {
+  display: block;
+  margin-inline-start: 2px;
+  margin-inline-end: 2px;
+  padding-block-start: 0.35em;
+  padding-inline-start: 0.75em;
+  padding-inline-end: 0.75em;
+  padding-block-end: 0.625em;
+  min-inline-size: min-content;
+  border-width: 2px;
+  border-style: groove;
+  border-color: threedface;
+  border-image: initial;
+}
+
+#mh_box_bd legend {
+  display: block;
+  padding-inline-start: 2px;
+  padding-inline-end: 2px;
+  border-width: initial;
+  border-style: none;
+  border-color: initial;
+  border-image: initial;
 }
 
 .mh_icon {
