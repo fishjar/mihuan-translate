@@ -2,7 +2,7 @@
   "manifest_version": 2,
   "name": "MiHuan Translate",
   "description": "一个自用的翻译扩展",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "author": "Gabe Yuan <yugang2002@gmail.com>",
   "homepage_url": "https://github.com/fishjar/mihuan-translate",
   "permissions": [

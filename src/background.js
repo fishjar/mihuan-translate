@@ -5,7 +5,7 @@
  * @param {*} sendResponse
  */
 function api(path, params, sendResponse) {
-  const url = new URL(`https://caihua.jisunauto.com/trans${path}`);
+  const url = new URL(`https://trans.rayjar.com${path}`);
   url.search = new URLSearchParams(params);
   fetch(url)
     .then((res) => {
